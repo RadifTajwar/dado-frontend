@@ -1,0 +1,305 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Page-specific styles. Each area owns its own file; shared tokens live here. */
+@import "../styles/site.css";
+@import "../styles/admin.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ==========================================================================
+   DADO design tokens
+   The brand is three colours: bone (surface), ink (text), clay (accent).
+   Everything else is a shade of those, plus two status hues used only on
+   status badges (ok / bad), always next to a label.
+   ========================================================================== */
+
+@theme {
+  /* System fonts on purpose: nothing to download, so text never flashes. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --font-heading: var(--font-sans);
+
+  --ease-brand: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* DADO brand colours → classes like bg-clay, text-panel-foreground, bg-ok-soft */
+  --color-clay: var(--clay);
+  --color-clay-foreground: var(--clay-foreground);
+  --color-clay-soft: var(--clay-soft);
+  --color-alt: var(--alt);
+  --color-app: var(--app);
+  --color-panel: var(--panel);
+  --color-panel-foreground: var(--panel-foreground);
+  --color-panel-muted: var(--panel-muted);
+  --color-panel-border: var(--panel-border);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --radius: 3px; /* near-square corners: editorial, not bubbly */
+
+  --background: #f3f0ea; /* bone */
+  --foreground: #17150f; /* ink */
+  --card: #f3f0ea;
+  --card-foreground: #17150f;
+  --popover: #f3f0ea;
+  --popover-foreground: #17150f;
+  --primary: #17150f;
+  --primary-foreground: #f3f0ea;
+  --secondary: #e8e3da;
+  --secondary-foreground: #17150f;
+  --muted: #e8e3da;
+  --muted-foreground: #6b645b; /* 5.1:1 on bone */
+  --accent: #e8e3da;
+  --accent-foreground: #17150f;
+  --destructive: #a32a1e;
+  --border: #ded8cd;
+  --input: #c8c0b2;
+  --ring: #c05a34;
+
+  /* clay is text-safe: ≥4.5:1 on bone, alt, muted and clay-soft; bone on clay is 5.1:1 */
+  --clay: #a54a2a;
+  --clay-foreground: #f3f0ea;
+  --clay-soft: #f4e2d9;
+  --alt: #ebe7e0; /* alternate section band on the public site */
+  --app: #eeeae3; /* admin ground, a shade under the cards */
+
+  /* the inverted ink band (process, CTA, footer); darker than the page in both themes */
+  --panel: #17150f;
+  --panel-foreground: #f3f0ea;
+  --panel-muted: #b9b4ab;
+  --panel-border: #3a362e;
+
+  --ok: #1f6b3f;
+  --ok-soft: #e4efe7;
+  --bad: #a32a1e;
+  --bad-soft: #f6e2de;
+
+  /* validated ordinal ramp (billed → collected) */
+  --chart-1: #d99a74;
+  --chart-2: #be6138;
+  --chart-3: #8f3c19;
+  --chart-4: #6b645b;
+  --chart-5: #c8c0b2;
+
+  --sidebar: #f3f0ea;
+  --sidebar-foreground: #17150f;
+  --sidebar-primary: #c05a34;
+  --sidebar-primary-foreground: #f3f0ea;
+  --sidebar-accent: #e8e3da;
+  --sidebar-accent-foreground: #17150f;
+  --sidebar-border: #ded8cd;
+  --sidebar-ring: #c05a34;
+}
+
+.dark {
+  --background: #14120f;
+  --foreground: #f3f0ea;
+  --card: #17150f;
+  --card-foreground: #f3f0ea;
+  --popover: #17150f;
+  --popover-foreground: #f3f0ea;
+  --primary: #f3f0ea;
+  --primary-foreground: #17150f;
+  --secondary: #221f18;
+  --secondary-foreground: #f3f0ea;
+  --muted: #221f18;
+  --muted-foreground: #a8a096; /* 7:1 on the dark surface */
+  --accent: #221f18;
+  --accent-foreground: #f3f0ea;
+  --destructive: #e88d80;
+  --border: #2c2921;
+  --input: #413c31;
+  --ring: #c05a34;
+
+  /* ≥5.2:1 on every dark surface; ink on clay is 5.9:1 */
+  --clay: #d9784f;
+  --clay-foreground: #17150f;
+  --clay-soft: #2e1c13;
+  --alt: #1c1a16;
+  --app: #100f0c;
+
+  --panel: #0b0a07;
+  --panel-foreground: #f3f0ea;
+  --panel-muted: #a8a096;
+  --panel-border: #2c2921;
+
+  --ok: #7ec79b;
+  --ok-soft: #16291e;
+  --bad: #e88d80;
+  --bad-soft: #2e1815;
+
+  /* the dark ramp is re-picked from the same hue, not flipped */
+  --chart-1: #7a3418;
+  --chart-2: #c05a34;
+  --chart-3: #e9a582;
+  --chart-4: #a8a096;
+  --chart-5: #413c31;
+
+  --sidebar: #17150f;
+  --sidebar-foreground: #f3f0ea;
+  --sidebar-primary: #c05a34;
+  --sidebar-primary-foreground: #17150f;
+  --sidebar-accent: #221f18;
+  --sidebar-accent-foreground: #f3f0ea;
+  --sidebar-border: #2c2921;
+  --sidebar-ring: #c05a34;
+}
+
+/* Ink bands (CTA, process steps, footer, login panel) are dark in both themes,
+   so inside them clay switches to the light version that stays readable on ink.
+   Works because `@theme inline` makes text-clay / bg-clay read var(--clay). */
+.bg-panel {
+  --clay: #d9784f;
+  --clay-foreground: #17150f;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  ::selection {
+    @apply bg-clay text-clay-foreground;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+/* ==========================================================================
+   Shared typography utilities (used by the public site; fine to reuse anywhere)
+   ========================================================================== */
+
+/* page container: 1180px max, fluid side gutter */
+@utility wrap {
+  width: 100%;
+  max-width: 1180px;
+  margin-inline: auto;
+  padding-inline: clamp(20px, 5vw, 48px);
+}
+
+/* big serif page title */
+@utility display {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(2.6rem, 7.2vw, 5.1rem);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+/* serif section title */
+@utility heading {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 4.2vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+/* small uppercase clay label with a leading rule: "——  WHAT WE DO" */
+@utility eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--clay);
+  &::before {
+    content: "";
+    width: 22px;
+    height: 1px;
+    background: currentColor;
+  }
+}
+
+/* intro paragraph under a title */
+@utility lede {
+  font-size: clamp(1.03rem, 1.6vw, 1.2rem);
+  line-height: 1.68;
+  max-width: 62ch;
+  color: color-mix(in srgb, currentColor 72%, transparent);
+}
+
+/* Scroll reveal with CSS only (no JavaScript, so nothing can flash or stay
+   hidden). Browsers without scroll-driven animations just show the content. */
+@utility reveal {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: dado-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 20%;
+    }
+  }
+}
+
+@keyframes dado-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

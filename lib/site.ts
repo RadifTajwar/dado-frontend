@@ -44,6 +44,7 @@ export const FOOTER_LINKS = {
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
     { href: TRIAL_HREF, label: "Free trial" },
+    { href: "/privacy", label: "Privacy" },
   ],
 } as const
 

@@ -85,7 +85,9 @@ export function DataTable<T>({
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-3 md:min-h-0">
+    // md:flex-1 = start from zero height and take the room left under the page's other
+    // sections; the card inside then shrinks to fit and the rows scroll.
+    <div className="flex min-w-0 flex-col gap-3 md:min-h-0 md:flex-1">
       {(searchText || actions) && (
         <div className="flex flex-wrap items-center gap-2">
           {searchText && (

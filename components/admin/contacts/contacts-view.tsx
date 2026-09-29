@@ -8,9 +8,11 @@ import { EmailDialog } from "@/components/admin/email-dialog"
 import { FlagDialog } from "@/components/admin/flag-dialog"
 import { PersonCell } from "@/components/admin/person-cell"
 import { Segmented } from "@/components/admin/segmented"
+import { RowMenu } from "@/components/admin/row-menu"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { useMutation } from "@/components/admin/use-mutation"
 import { Button } from "@/components/ui/button"
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { contactDraft } from "@/lib/admin/drafts"
 import { CONTACT_FLAG_REASONS, CONTACT_STATUS } from "@/lib/admin/labels"
 import { apiFetch } from "@/lib/api/client"
@@ -59,13 +61,15 @@ export function ContactsView({ contacts }: { contacts: Contact[] }) {
       id: "about",
       header: "About",
       sortValue: (c) => c.service,
-      cell: (c) => <span className="block max-w-48 truncate">{c.service || "—"}</span>,
+      cell: (c) => <span className="block max-w-44 truncate">{c.service || "—"}</span>,
     },
     {
       id: "message",
       header: "Message",
+      // takes the room left over and truncates, so the row never gets wider than the table
+      className: "w-full max-w-0",
       cell: (c) => (
-        <span className="block max-w-72 truncate text-muted-foreground" title={c.message}>
+        <span className="block truncate text-muted-foreground" title={c.message}>
           {c.message}
         </span>
       ),
@@ -111,28 +115,19 @@ export function ContactsView({ contacts }: { contacts: Contact[] }) {
           <Button type="button" variant="outline" size="sm" onClick={() => openDetails(c)}>
             Details
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => setModal({ kind: "email", id: c.id })}>
-            Email
-          </Button>
-          {c.status === "flagged" ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => patch(c, { status: "new" }, <span>Unflagged <b>{c.name}</b></span>)}
-            >
-              Unflag
-            </Button>
-          ) : (
-            <Button type="button" variant="destructive" size="sm" onClick={() => setModal({ kind: "flag", id: c.id })}>
-              Flag
-            </Button>
-          )}
-          {c.status !== "archived" && (
-            <Button type="button" variant="ghost" size="sm" onClick={() => archive(c)}>
-              Archive
-            </Button>
-          )}
+          <RowMenu label={`More actions for ${c.name}`}>
+            <DropdownMenuItem onSelect={() => setModal({ kind: "email", id: c.id })}>Email</DropdownMenuItem>
+            {c.status !== "archived" && <DropdownMenuItem onSelect={() => archive(c)}>Archive</DropdownMenuItem>}
+            {c.status === "flagged" ? (
+              <DropdownMenuItem onSelect={() => patch(c, { status: "new" }, <span>Unflagged <b>{c.name}</b></span>)}>
+                Unflag
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem variant="destructive" onSelect={() => setModal({ kind: "flag", id: c.id })}>
+                Flag
+              </DropdownMenuItem>
+            )}
+          </RowMenu>
         </div>
       ),
     },

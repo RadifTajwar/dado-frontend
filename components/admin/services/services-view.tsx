@@ -51,10 +51,12 @@ export function ServicesView({ services, jobs }: { services: Service[]; jobs: Jo
       id: "name",
       header: "Service",
       sortValue: (s) => s.name,
+      // takes the room left over and truncates, so the row never gets wider than the table
+      className: "w-full max-w-0",
       cell: (s) => (
-        <div className="grid min-w-0 gap-px">
-          <b className="font-semibold">{s.name}</b>
-          <span className="max-w-72 truncate text-[0.78rem] text-muted-foreground">
+        <div className="grid min-w-0 gap-px" title={s.name}>
+          <b className="truncate font-semibold">{s.name}</b>
+          <span className="truncate text-[0.78rem] text-muted-foreground">
             {[s.group, s.use].filter(Boolean).join(" · ")}
           </span>
         </div>

@@ -48,7 +48,11 @@ type Props<T> = {
 const PAGE_SIZES = [10, 25, 50, 100]
 
 /* Search, sort and paginate a list that is already in memory. Sorting applies
-   to the whole list, not just the visible page. */
+   to the whole list, not just the visible page.
+   Height: on desktop the table never grows past the bottom of the screen: it
+   takes whatever room the filters above leave and scrolls inside, with the
+   header row and the pagination bar always visible. On phones it is capped at
+   70% of the screen and the page scrolls around it. */
 export function DataTable<T>({
   rows,
   columns,
@@ -81,7 +85,7 @@ export function DataTable<T>({
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-3 md:min-h-0">
       {(searchText || actions) && (
         <div className="flex flex-wrap items-center gap-2">
           {searchText && (
@@ -107,22 +111,27 @@ export function DataTable<T>({
 
       {filters}
 
-      <div className="min-w-0 overflow-hidden rounded-lg border bg-card">
+      <div className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border bg-card">
         {rows.length === 0 ? (
           <EmptyState title={empty.title} description={empty.description} />
         ) : sorted.length === 0 ? (
           <EmptyState title="Nothing here" description="Nothing matches that search or filter." />
         ) : (
           <>
-            <Table className="min-w-160 text-[0.86rem]">
-              <TableHeader className="bg-muted/60">
+            <Table
+              className="min-w-160 text-[0.86rem]"
+              containerClassName="min-h-0 overflow-auto max-md:max-h-[70svh]"
+            >
+              <TableHeader className="[&_tr]:border-b-0">
                 <TableRow className="hover:bg-transparent">
                   {columns.map((col) => (
                     <TableHead
                       key={col.id}
                       aria-sort={sort?.id === col.id ? (sort.dir === 1 ? "ascending" : "descending") : undefined}
                       className={cn(
-                        "h-10 px-3.5 text-[0.7rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase",
+                        // sticky while the rows scroll; solid background (60% muted over the card) and a
+                        // shadow line instead of a border, which would scroll away with collapsed borders
+                        "sticky top-0 z-10 h-10 bg-[color-mix(in_oklab,var(--muted)_60%,var(--card))] px-3.5 text-[0.7rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase shadow-[inset_0_-1px_0_var(--border)]",
                         col.className,
                       )}
                     >
@@ -161,7 +170,7 @@ export function DataTable<T>({
               </TableBody>
             </Table>
 
-            <div className="flex flex-wrap items-center gap-3 border-t px-4 py-3 text-[0.82rem]">
+            <div className="flex shrink-0 flex-wrap items-center gap-3 border-t px-4 py-3 text-[0.82rem]">
               <p className="text-muted-foreground max-sm:w-full">
                 Showing{" "}
                 <b className="text-foreground tabular-nums">

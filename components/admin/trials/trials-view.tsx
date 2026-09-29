@@ -10,10 +10,12 @@ import { EmailDialog } from "@/components/admin/email-dialog"
 import { FlagDialog } from "@/components/admin/flag-dialog"
 import { FileLink, PersonCell } from "@/components/admin/person-cell"
 import { Segmented } from "@/components/admin/segmented"
+import { RowMenu } from "@/components/admin/row-menu"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { TrialDetailsDialog } from "@/components/admin/trials/trial-details-dialog"
 import { useMutation } from "@/components/admin/use-mutation"
 import { Button } from "@/components/ui/button"
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { trialDraft } from "@/lib/admin/drafts"
 import { TRIAL_FLAG_REASONS, TRIAL_STATUS } from "@/lib/admin/labels"
 import { apiFetch } from "@/lib/api/client"
@@ -104,9 +106,6 @@ export function TrialsView({ trials }: { trials: Trial[] }) {
           <Button type="button" variant="outline" size="sm" onClick={() => openDetails(t)}>
             Details
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => setModal({ kind: "email", id: t.id })}>
-            Email
-          </Button>
           {t.status === "converted" && t.clientId ? (
             <Button asChild variant="ghost" size="sm">
               <Link href={`/admin/clients?c=${t.clientId}`}>Open client</Link>
@@ -116,20 +115,18 @@ export function TrialsView({ trials }: { trials: Trial[] }) {
               <PlusIcon /> Client
             </Button>
           )}
-          {t.status === "flagged" ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => patch(t, { status: "new" }, <span>Unflagged <b>{who(t)}</b></span>)}
-            >
-              Unflag
-            </Button>
-          ) : (
-            <Button type="button" variant="destructive" size="sm" onClick={() => setModal({ kind: "flag", id: t.id })}>
-              Flag
-            </Button>
-          )}
+          <RowMenu label={`More actions for ${who(t)}`}>
+            <DropdownMenuItem onSelect={() => setModal({ kind: "email", id: t.id })}>Email</DropdownMenuItem>
+            {t.status === "flagged" ? (
+              <DropdownMenuItem onSelect={() => patch(t, { status: "new" }, <span>Unflagged <b>{who(t)}</b></span>)}>
+                Unflag
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem variant="destructive" onSelect={() => setModal({ kind: "flag", id: t.id })}>
+                Flag
+              </DropdownMenuItem>
+            )}
+          </RowMenu>
         </div>
       ),
     },

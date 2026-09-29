@@ -21,9 +21,13 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     <TooltipProvider>
       <SidebarProvider defaultOpen={sidebarOpen}>
         <AdminSidebar counts={counts} />
-        <SidebarInset className="min-w-0 bg-app">
+        {/* On desktop the admin is exactly one screen tall: the content area scrolls
+            on its own (dashboard, media), and list pages let their table fill what's left. */}
+        <SidebarInset className="min-w-0 bg-app md:h-svh md:overflow-hidden">
           <AdminHeader />
-          <div className="flex min-w-0 flex-1 flex-col gap-5 p-4 sm:p-6 lg:p-7">{children}</div>
+          <div className="flex min-w-0 flex-1 flex-col gap-5 p-4 sm:p-6 md:min-h-0 md:overflow-y-auto lg:p-7">
+            {children}
+          </div>
         </SidebarInset>
       </SidebarProvider>
       <Toaster position="bottom-right" />

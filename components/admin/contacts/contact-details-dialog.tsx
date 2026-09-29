@@ -4,7 +4,7 @@ import { MiniLabel, Notice } from "@/components/admin/facts"
 import { Initials } from "@/components/admin/person-cell"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { formatDate, timeAgo } from "@/lib/format"
+import { dateWithToday, formatTime, timeAgo } from "@/lib/format"
 import type { Contact } from "@/lib/types"
 
 export function ContactDetailsDialog({
@@ -31,7 +31,7 @@ export function ContactDetailsDialog({
               <a href={`mailto:${encodeURIComponent(c.email)}`} className="border-b border-input">
                 {c.email}
               </a>{" "}
-              · {formatDate(c.createdAt)}
+              · {dateWithToday(c.createdAt)}, {formatTime(c.createdAt)}
               {c.phone && ` · ${c.phone}`}
             </DialogDescription>
           </div>

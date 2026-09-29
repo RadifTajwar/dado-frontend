@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { debounce } from "lodash-es"
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -64,10 +65,21 @@ export function DataTable<T>({
   rowClassName,
   empty,
 }: Props<T>) {
-  const [query, setQuery] = useState("")
   const [sort, setSort] = useState<{ id: string; dir: 1 | -1 } | null>(null)
   const [page, setPage] = useState(1)
   const [size, setSize] = useState(10)
+
+  const [input, setInput] = useState("") // what's typed, shown at once
+  const [query, setQuery] = useState("") // what the table filters by
+  // Filter 250 ms after the last keystroke instead of on every key.
+  // useState's initializer creates the debounced function once per table.
+  const [applyQuery] = useState(() =>
+    debounce((value: string) => {
+      setQuery(value)
+      setPage(1)
+    }, 250),
+  )
+  useEffect(() => () => applyQuery.cancel(), [applyQuery]) // no late update after leaving the page
 
   const q = query.trim().toLowerCase()
   const matched = q && searchText ? rows.filter((r) => searchText(r).toLowerCase().includes(q)) : rows
@@ -97,10 +109,10 @@ export function DataTable<T>({
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
-                value={query}
+                value={input}
                 onChange={(e) => {
-                  setQuery(e.target.value)
-                  setPage(1)
+                  setInput(e.target.value)
+                  applyQuery(e.target.value)
                 }}
                 placeholder={searchLabel}
                 aria-label={searchLabel}

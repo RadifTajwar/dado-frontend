@@ -5,8 +5,8 @@ const TZ = "Asia/Dhaka"
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" })
 const usd0 = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
-const day = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: TZ })
 const dayKey = new Intl.DateTimeFormat("en-CA", { timeZone: TZ }) // → YYYY-MM-DD
+const clock = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: TZ })
 
 /** $1,230.00 */
 export const money = (n: number) => usd.format(n || 0)
@@ -14,17 +14,30 @@ export const money = (n: number) => usd.format(n || 0)
 /** $1,230 */
 export const money0 = (n: number) => usd0.format(n || 0)
 
-/** "YYYY-MM-DD" or an ISO timestamp → "24 Sep 2026" */
-export function formatDate(value: string) {
-  return day.format(toDate(value))
-}
+/** "YYYY-MM-DD" or an ISO timestamp → its calendar day in the studio, "YYYY-MM-DD".
+    Strings in this shape compare correctly with < and >, so date filters use them. */
+export const dayOf = (value: string) => dayKey.format(toDate(value))
 
 /** Today's date in the studio's time zone, as "YYYY-MM-DD". */
 export const today = () => dayKey.format(new Date())
 
+/** "YYYY-MM-DD" or an ISO timestamp → "29.09.2026" */
+export function formatDate(value: string) {
+  const [y, m, d] = dayOf(value).split("-")
+  return `${d}.${m}.${y}`
+}
+
+/** An ISO timestamp → its time of day in the studio: "1:48 PM" */
+export const formatTime = (value: string) => clock.format(new Date(value))
+
+/** Like formatDate, with "(Today)" added for today: "29.09.2026 (Today)". */
+export function dateWithToday(value: string) {
+  return dayOf(value) === today() ? `${formatDate(value)} (Today)` : formatDate(value)
+}
+
 /** "today", "yesterday", "5 days ago", "3 mo ago", "2 yr ago" */
 export function timeAgo(value: string) {
-  const days = Math.round((Date.parse(today()) - Date.parse(dayKey.format(toDate(value)))) / 864e5)
+  const days = Math.round((Date.parse(today()) - Date.parse(dayOf(value))) / 864e5)
   if (days <= 0) return "today"
   if (days === 1) return "yesterday"
   if (days < 30) return `${days} days ago`

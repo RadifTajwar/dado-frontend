@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { TRIAL_STATUS } from "@/lib/admin/labels"
-import { formatDate, timeAgo } from "@/lib/format"
+import { dateWithToday, formatTime, timeAgo } from "@/lib/format"
 import { DISCIPLINES } from "@/lib/site"
 import type { Trial } from "@/lib/types"
 
@@ -51,7 +51,7 @@ export function TrialDetailsDialog({
         <Facts
           small
           items={[
-            { label: "Received", value: formatDate(t.createdAt) },
+            { label: "Received", value: `${dateWithToday(t.createdAt)}, ${formatTime(t.createdAt)}` },
             { label: "Batch size", value: t.volume || "—" },
             { label: "NDA", value: t.nda ? "Requested" : "Not requested" },
             { label: "Status", value: TRIAL_STATUS[t.status].label },

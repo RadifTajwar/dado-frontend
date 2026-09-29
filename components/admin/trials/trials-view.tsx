@@ -7,22 +7,26 @@ import { PlusIcon } from "lucide-react"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
 import { DataTable, type Column } from "@/components/admin/data-table"
 import { EmailDialog } from "@/components/admin/email-dialog"
+import { DateRangeFilter, FilterSelect } from "@/components/admin/filter-controls"
 import { FlagDialog } from "@/components/admin/flag-dialog"
 import { FileLink, PersonCell } from "@/components/admin/person-cell"
 import { Segmented } from "@/components/admin/segmented"
+import { ReceivedCell } from "@/components/admin/received-cell"
 import { RowMenu } from "@/components/admin/row-menu"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { TrialDetailsDialog } from "@/components/admin/trials/trial-details-dialog"
 import { useMutation } from "@/components/admin/use-mutation"
 import { Button } from "@/components/ui/button"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import { NativeSelectOption } from "@/components/ui/native-select"
 import { trialDraft } from "@/lib/admin/drafts"
+import { inRange, NO_RANGE, type DateRange } from "@/lib/admin/filters"
 import { TRIAL_FLAG_REASONS, TRIAL_STATUS } from "@/lib/admin/labels"
 import { apiFetch } from "@/lib/api/client"
 import { API } from "@/lib/api/endpoints"
-import { formatDate, hostOf, timeAgo } from "@/lib/format"
-import { DISCIPLINES } from "@/lib/site"
-import type { Trial, TrialStatus } from "@/lib/types"
+import { dayOf, hostOf } from "@/lib/format"
+import { DISCIPLINE_ORDER, DISCIPLINES } from "@/lib/site"
+import type { Discipline, Trial, TrialStatus } from "@/lib/types"
 
 type StatusFilter = "all" | TrialStatus
 type ReadFilter = "all" | "unread" | "read"
@@ -35,12 +39,18 @@ export function TrialsView({ trials }: { trials: Trial[] }) {
   const mutate = useMutation()
   const [status, setStatus] = useState<StatusFilter>("all")
   const [read, setRead] = useState<ReadFilter>("all")
+  const [service, setService] = useState<"all" | Discipline>("all")
+  const [received, setReceived] = useState<DateRange>(NO_RANGE)
   const [modal, setModal] = useState<Modal | null>(null)
 
   const current = modal && trials.find((t) => t.id === modal.id)
-  const count = (s: TrialStatus) => trials.filter((t) => t.status === s).length
-  const unread = trials.filter((t) => !t.read).length
-  const rows = trials.filter(
+  // Service and date narrow the list first, so the Status / Read counts describe what's left.
+  const scoped = trials.filter(
+    (t) => (service === "all" || t.services.includes(service)) && inRange(dayOf(t.createdAt), received),
+  )
+  const count = (s: TrialStatus) => scoped.filter((t) => t.status === s).length
+  const unread = scoped.filter((t) => !t.read).length
+  const rows = scoped.filter(
     (t) => (status === "all" || t.status === status) && (read === "all" || (read === "read") === t.read),
   )
 
@@ -71,12 +81,19 @@ export function TrialsView({ trials }: { trials: Trial[] }) {
         </div>
       ),
     },
-    { id: "link", header: "Link", sortValue: (t) => hostOf(t.link), cell: (t) => <FileLink url={t.link} /> },
+    {
+      id: "link",
+      header: "Link",
+      // from 1400px up so the row fits a smaller laptop; the link is also in Details
+      className: "hidden min-[1400px]:table-cell",
+      sortValue: (t) => hostOf(t.link),
+      cell: (t) => <FileLink url={t.link} />,
+    },
     {
       id: "received",
       header: "Received",
       sortValue: (t) => Date.parse(t.createdAt),
-      cell: (t) => <span title={formatDate(t.createdAt)}>{timeAgo(t.createdAt)}</span>,
+      cell: (t) => <ReceivedCell at={t.createdAt} />,
     },
     {
       id: "status",
@@ -147,7 +164,7 @@ export function TrialsView({ trials }: { trials: Trial[] }) {
               value={status}
               onChange={setStatus}
               options={[
-                { value: "all", label: "All", count: trials.length },
+                { value: "all", label: "All", count: scoped.length },
                 { value: "new", label: "New", count: count("new") },
                 { value: "converted", label: "Clients", count: count("converted") },
                 { value: "flagged", label: "Flagged", count: count("flagged") },
@@ -161,9 +178,18 @@ export function TrialsView({ trials }: { trials: Trial[] }) {
               options={[
                 { value: "all", label: "All" },
                 { value: "unread", label: "Unread", count: unread },
-                { value: "read", label: "Read", count: trials.length - unread },
+                { value: "read", label: "Read", count: scoped.length - unread },
               ]}
             />
+            <FilterSelect label="Service" value={service} onChange={(v) => setService(v as "all" | Discipline)}>
+              <NativeSelectOption value="all">All services</NativeSelectOption>
+              {DISCIPLINE_ORDER.map((d) => (
+                <NativeSelectOption key={d} value={d}>
+                  {DISCIPLINES[d].label}
+                </NativeSelectOption>
+              ))}
+            </FilterSelect>
+            <DateRangeFilter label="Received" value={received} onChange={setReceived} />
           </div>
         }
         rowClassName={(t) =>

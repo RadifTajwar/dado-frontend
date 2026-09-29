@@ -9,15 +9,19 @@ import { ClientFormDialog } from "@/components/admin/clients/client-form-dialog"
 import { RecordPaymentDialog } from "@/components/admin/clients/record-payment-dialog"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
 import { DataTable, type Column } from "@/components/admin/data-table"
+import { DateRangeFilter, FilterSelect } from "@/components/admin/filter-controls"
 import { KpiCard, KpiGrid } from "@/components/admin/kpi-card"
 import { PersonCell } from "@/components/admin/person-cell"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { useMutation } from "@/components/admin/use-mutation"
 import { Button } from "@/components/ui/button"
+import { NativeSelectOptGroup, NativeSelectOption } from "@/components/ui/native-select"
+import { inRange, NO_RANGE, type DateRange } from "@/lib/admin/filters"
 import { financeByClient, NO_FINANCE, percent, sumJobs, type Finance } from "@/lib/admin/finance"
 import { apiFetch } from "@/lib/api/client"
 import { API } from "@/lib/api/endpoints"
-import { formatDate, money, money0 } from "@/lib/format"
+import { dayOf, formatDate, money, money0 } from "@/lib/format"
+import { DISCIPLINE_ORDER, DISCIPLINES } from "@/lib/site"
 import type { Client, Job, Service } from "@/lib/types"
 
 type Row = { client: Client; f: Finance }
@@ -50,9 +54,15 @@ export function ClientsView({
     if (openId) window.history.replaceState(null, "", "/admin/clients")
   }, [openId])
 
+  const [service, setService] = useState("all") // a service id
+  const [since, setSince] = useState<DateRange>(NO_RANGE)
+
   const finance = financeByClient(jobs)
   const serviceById = new Map(services.map((s) => [s.id, s]))
+  // Clients who have had at least one job for the chosen service.
+  const boughtIt = new Set(jobs.filter((j) => j.serviceId === service).map((j) => j.clientId))
   const rows: Row[] = clients
+    .filter((c) => (service === "all" || boughtIt.has(c.id)) && inRange(dayOf(c.since), since))
     .map((client) => ({ client, f: finance.get(client.id) ?? NO_FINANCE }))
     .sort((a, b) => b.f.billed - a.f.billed)
   const totals = sumJobs(jobs)
@@ -72,7 +82,14 @@ export function ClientsView({
         <PersonCell name={r.client.name} title={r.client.company || r.client.name} sub={`${r.client.name} · ${r.client.email}`} />
       ),
     },
-    { id: "country", header: "Country", sortValue: (r) => r.client.country, cell: (r) => r.client.country || "—" },
+    {
+      id: "country",
+      header: "Country",
+      // wide screens only, so the row fits a laptop; still searchable and shown in Details
+      className: "hidden 2xl:table-cell",
+      sortValue: (r) => r.client.country,
+      cell: (r) => r.client.country || "—",
+    },
     {
       id: "source",
       header: "Source",
@@ -80,7 +97,21 @@ export function ClientsView({
       cell: (r) =>
         r.client.source === "trial" ? <StatusBadge tone="clay">Free trial</StatusBadge> : <StatusBadge>Direct</StatusBadge>,
     },
-    { id: "jobs", header: "Jobs", className: "text-right tabular-nums", sortValue: (r) => r.f.count, cell: (r) => r.f.count },
+    {
+      id: "since",
+      header: "Since",
+      className: "whitespace-nowrap tabular-nums",
+      sortValue: (r) => r.client.since,
+      cell: (r) => formatDate(r.client.since),
+    },
+    {
+      id: "jobs",
+      header: "Jobs",
+      // from 1400px up; the count is also in Details
+      className: "hidden text-right tabular-nums min-[1400px]:table-cell",
+      sortValue: (r) => r.f.count,
+      cell: (r) => r.f.count,
+    },
     { id: "billed", header: "Billed", className: "text-right tabular-nums", sortValue: (r) => r.f.billed, cell: (r) => money(r.f.billed) },
     { id: "paid", header: "Paid", className: "text-right tabular-nums", sortValue: (r) => r.f.paid, cell: (r) => money(r.f.paid) },
     {
@@ -148,6 +179,25 @@ export function ClientsView({
           <Button type="button" variant="clay" onClick={() => setModal({ kind: "newClient" })}>
             <PlusIcon /> New client
           </Button>
+        }
+        filters={
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <FilterSelect label="Service" value={service} onChange={setService}>
+              <NativeSelectOption value="all">All services</NativeSelectOption>
+              {DISCIPLINE_ORDER.map((d) => (
+                <NativeSelectOptGroup key={d} label={DISCIPLINES[d].long}>
+                  {services
+                    .filter((s) => s.discipline === d)
+                    .map((s) => (
+                      <NativeSelectOption key={s.id} value={s.id}>
+                        {s.name}
+                      </NativeSelectOption>
+                    ))}
+                </NativeSelectOptGroup>
+              ))}
+            </FilterSelect>
+            <DateRangeFilter label="Client since" value={since} onChange={setSince} />
+          </div>
         }
         empty={{ title: "No clients yet", description: "Add one here, or convert a trial over on the Trials page." }}
       />

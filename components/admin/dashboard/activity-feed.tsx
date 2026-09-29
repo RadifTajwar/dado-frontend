@@ -1,7 +1,7 @@
 import { EmptyState } from "@/components/admin/empty-state"
+import { ReceivedCell } from "@/components/admin/received-cell"
 import { StatusBadge } from "@/components/admin/status-badge"
 import type { FeedItem } from "@/lib/admin/stats"
-import { timeAgo } from "@/lib/format"
 
 /* Latest jobs, trials and messages in one list. */
 export function ActivityFeed({ items }: { items: FeedItem[] }) {
@@ -23,7 +23,9 @@ export function ActivityFeed({ items }: { items: FeedItem[] }) {
                 {f.kind === "Job" ? " — " : " · "}
                 {f.detail}
               </td>
-              <td className="px-4 py-2.5 text-right whitespace-nowrap text-muted-foreground">{timeAgo(f.at)}</td>
+              <td className="px-4 py-2.5 text-right text-muted-foreground">
+                <ReceivedCell at={f.at} className="justify-items-end" />
+              </td>
             </tr>
           ))}
         </tbody>

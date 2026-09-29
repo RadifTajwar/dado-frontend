@@ -5,19 +5,24 @@ import { useState } from "react"
 import { ContactDetailsDialog } from "@/components/admin/contacts/contact-details-dialog"
 import { DataTable, type Column } from "@/components/admin/data-table"
 import { EmailDialog } from "@/components/admin/email-dialog"
+import { DateRangeFilter, FilterSelect } from "@/components/admin/filter-controls"
 import { FlagDialog } from "@/components/admin/flag-dialog"
 import { PersonCell } from "@/components/admin/person-cell"
 import { Segmented } from "@/components/admin/segmented"
+import { ReceivedCell } from "@/components/admin/received-cell"
 import { RowMenu } from "@/components/admin/row-menu"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { useMutation } from "@/components/admin/use-mutation"
 import { Button } from "@/components/ui/button"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import { NativeSelectOptGroup, NativeSelectOption } from "@/components/ui/native-select"
 import { contactDraft } from "@/lib/admin/drafts"
 import { CONTACT_FLAG_REASONS, CONTACT_STATUS } from "@/lib/admin/labels"
 import { apiFetch } from "@/lib/api/client"
 import { API } from "@/lib/api/endpoints"
-import { formatDate, timeAgo } from "@/lib/format"
+import { inRange, NO_RANGE, type DateRange } from "@/lib/admin/filters"
+import { dayOf } from "@/lib/format"
+import { CONTACT_SERVICE_GROUPS, CONTACT_SERVICE_OTHER } from "@/lib/site"
 import type { Contact, ContactStatus } from "@/lib/types"
 
 type StatusFilter = "all" | ContactStatus
@@ -29,12 +34,18 @@ export function ContactsView({ contacts }: { contacts: Contact[] }) {
   const mutate = useMutation()
   const [status, setStatus] = useState<StatusFilter>("all")
   const [read, setRead] = useState<ReadFilter>("all")
+  const [service, setService] = useState("all")
+  const [received, setReceived] = useState<DateRange>(NO_RANGE)
   const [modal, setModal] = useState<Modal | null>(null)
 
   const current = modal && contacts.find((c) => c.id === modal.id)
-  const count = (s: ContactStatus) => contacts.filter((c) => c.status === s).length
-  const unread = contacts.filter((c) => !c.read).length
-  const rows = contacts.filter(
+  // Service and date narrow the list first, so the Status / Read counts describe what's left.
+  const scoped = contacts.filter(
+    (c) => (service === "all" || c.service === service) && inRange(dayOf(c.createdAt), received),
+  )
+  const count = (s: ContactStatus) => scoped.filter((c) => c.status === s).length
+  const unread = scoped.filter((c) => !c.read).length
+  const rows = scoped.filter(
     (c) => (status === "all" || c.status === status) && (read === "all" || (read === "read") === c.read),
   )
 
@@ -78,7 +89,7 @@ export function ContactsView({ contacts }: { contacts: Contact[] }) {
       id: "received",
       header: "Received",
       sortValue: (c) => Date.parse(c.createdAt),
-      cell: (c) => <span title={formatDate(c.createdAt)}>{timeAgo(c.createdAt)}</span>,
+      cell: (c) => <ReceivedCell at={c.createdAt} />,
     },
     {
       id: "status",
@@ -140,7 +151,7 @@ export function ContactsView({ contacts }: { contacts: Contact[] }) {
         columns={columns}
         rowKey={(c) => c.id}
         searchText={(c) => `${c.name} ${c.email} ${c.service} ${c.message}`}
-        searchLabel="Search sender, service or message…"
+        searchLabel="Search name, email or message…"
         filters={
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <Segmented
@@ -148,7 +159,7 @@ export function ContactsView({ contacts }: { contacts: Contact[] }) {
               value={status}
               onChange={setStatus}
               options={[
-                { value: "all", label: "All", count: contacts.length },
+                { value: "all", label: "All", count: scoped.length },
                 { value: "new", label: "New", count: count("new") },
                 { value: "replied", label: "Replied", count: count("replied") },
                 { value: "flagged", label: "Flagged", count: count("flagged") },
@@ -162,9 +173,23 @@ export function ContactsView({ contacts }: { contacts: Contact[] }) {
               options={[
                 { value: "all", label: "All" },
                 { value: "unread", label: "Unread", count: unread },
-                { value: "read", label: "Read", count: contacts.length - unread },
+                { value: "read", label: "Read", count: scoped.length - unread },
               ]}
             />
+            <FilterSelect label="Service" value={service} onChange={setService}>
+              <NativeSelectOption value="all">All services</NativeSelectOption>
+              {CONTACT_SERVICE_GROUPS.map(({ group, options }) => (
+                <NativeSelectOptGroup key={group} label={group}>
+                  {options.map((o) => (
+                    <NativeSelectOption key={o} value={o}>
+                      {o}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelectOptGroup>
+              ))}
+              <NativeSelectOption value={CONTACT_SERVICE_OTHER}>{CONTACT_SERVICE_OTHER}</NativeSelectOption>
+            </FilterSelect>
+            <DateRangeFilter label="Received" value={received} onChange={setReceived} />
           </div>
         }
         rowClassName={(c) =>
